@@ -1,0 +1,33 @@
+version: '3.7'
+services:
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.13.2
+        container_name: elasticsearch
+        environment:
+            - xpack.security.enabled=false
+            - discovery.type=single-node
+        ports:
+            - 9200:9200
+            - 9300:9300
+    kibana:
+        container_name: kibana
+        image: docker.elastic.co/kibana/kibana:7.13.2
+        environment:
+            - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+        ports:
+            - 5601:5601
+        depends_on:
+            - elasticsearch
+
+    logstash:
+        container_name: logstash
+        image: docker.elastic.co/logstash/logstash:7.13.2
+        links:
+            - elasticsearch
+        environment:
+            LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+        volumes:
+            - ./conf:/usr/share/logstash/custom-conf
+        command: logstash -f /usr/share/logstash/custom-conf/logstash.conf
+        depends_on:
+            - elasticsearch
